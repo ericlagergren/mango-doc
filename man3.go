@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 	"go/doc"
 	"go/token"
@@ -284,6 +285,19 @@ func params(m *F, fl []*ast.Field, decl bool) {
 	}
 }
 
+func unwrapTypeName(v ast.Expr) *ast.Ident {
+	switch v := v.(type) {
+	case *ast.StarExpr:
+		return unwrapTypeName(v.X)
+	case *ast.SelectorExpr:
+		return unwrapTypeName(v.X)
+	case *ast.Ident:
+		return v
+	default:
+		panic(fmt.Errorf("unknown expression in field type name %T: %#v", v))
+	}
+}
+
 func fields(mr *F, fl *ast.FieldList, sep string) (unex bool) {
 	if fl == nil || len(fl.List) == 0 {
 		return
@@ -310,16 +324,8 @@ func fields(mr *F, fl *ast.FieldList, sep string) (unex bool) {
 		if uxc == len(f.Names) && uxc != 0 {
 			continue
 		} else if len(f.Names) == 0 {
-			var v ast.Expr
-			switch t := f.Type.(type) {
-			case *ast.Ident:
-				v = t
-			case *ast.SelectorExpr:
-				v = t.X
-			case *ast.StarExpr:
-				v = t.X
-			}
-			if !ast.IsExported(v.(*ast.Ident).Name) {
+			v := unwrapTypeName(f.Type)
+			if !ast.IsExported(v.Name) {
 				continue
 			}
 		}
