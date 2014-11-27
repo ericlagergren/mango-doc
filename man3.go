@@ -8,7 +8,6 @@ import (
 )
 
 func type_type(t *doc.Type) *ast.TypeSpec {
-	print(len(t.Decl.Specs)) //XXX remove if always 1
 	return t.Decl.Specs[0].(*ast.TypeSpec)
 }
 
