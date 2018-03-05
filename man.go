@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/doc"
 	"go/token"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -180,7 +181,17 @@ func (m *M) find_refs(extras []string) {
 }
 
 func (m *M) do_header(kind string) {
-	tm := time.Now().Format("2006-01-02")
+	source_date_epoch := os.Getenv("SOURCE_DATE_EPOCH")
+	var tm string
+	if source_date_epoch == "" {
+		tm = time.Now().UTC().Format("2006-01-02")
+	} else {
+		sde, err := strconv.ParseInt(source_date_epoch, 10, 64)
+		if err != nil {
+			panic(fmt.Sprintf("Invalid SOURCE_DATE_EPOCH: %s", err))
+		}
+		tm = time.Unix(sde, 0).UTC().Format("2006-01-02")
+	}
 	version := m.version
 	if version == "" {
 		version = tm
